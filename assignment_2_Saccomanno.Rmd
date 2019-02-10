@@ -1,0 +1,55 @@
+---
+title: "Assignment2"
+author: "Vienna Saccomanno"
+date: "2/10/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages}
+
+library(tidyverse)
+library(scales)
+
+```
+
+
+
+```{r data}
+cetaceans<- read_csv("captive_cetacean.csv")
+```
+
+```{r}
+
+cod<- cetaceans %>%
+  filter(acquisition %in% c("Rescue", "Capture", "Born")) %>% 
+  mutate(acquisition = recode_factor(acquisition,
+   'Rescue' = 'Rescued', 'Born' = 'Born in Captivity', 'Capture' = 'Captured')
+  ) 
+  
+cod$originDate = as.Date(as.character(cod$originDate), format = "%m/%d/%y")
+
+
+View(cod)
+
+cod_viz<- cod %>% 
+  ggplot(aes(x=originDate, fill=as.factor(acquisition)))+
+                   geom_histogram(alpha=0.7, bins = 80) +
+  #scale_fill_manual(values = c("Captured" = "red",
+                            #  "Born in Captivity"="yellow",
+                             # "Rescued" = "blue"))+
+  scale_x_date(breaks = date_breaks("10 years"), 
+               labels = date_format("%Y"))
+  
+cod_viz
+
+
+
+
+
+?strptime
+```
+
