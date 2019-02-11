@@ -56,18 +56,31 @@ cod_viz
 #Read-in catch data
 catch<- read_csv("fish_catch.csv")
 
+#Setting "Year" to a sequence of numbers
+catch_seq<- catch %>% 
+  mutate("seq"= seq(from=0, to=62)) 
 ```
 
 ```{r exploratory graph}
 
 #Making an exploratory graph to estimate the structure of the data
-ggplot(catch, aes(x=Year, y=Wild_Catch))+
-  geom_point()
+ggplot(catch_seq, aes(x=seq, y=Wild_Catch))+
+  geom_point()+
+  theme(axis.text.x=element_text(angle=90, hjust=1))
+
+
 #Data look non-linear, and somewhat logistic
 Bestimate<- (90 - 15)/15
 
-#Slope of natural log (y=e^rt -> ln(y) = rt) = r
-#Looking at the graph, time 0-4 was the exponential growth
+#Slope of natural log (y=e^rt -> ln(y) = rt) = r. Looking at the graph, 1950-1970 (i.e. 1-20) was the exponential catch.
+
+#Estimate r (the catch rate). Isolate the first 20 points
+exp_r <- catch_seq %>%
+  filter(seq<21) 
+
+#Make sure the log is linear
+ggplot(exp_r, aes(x=seq, y=log(Wild_Catch)))+
+  geom_point()
 
 ```
 
@@ -77,5 +90,4 @@ N(t) = A/(1+Be^-rt)
 # Estimate for K/A: ~ 90
 # Estimate for N0: ~ 15
 # Estimate for B: ~ 5
-
-BEstimate <- (3700 - 2000)/2000 # BEstimate = 0.85
+BEstimate <- (90 - 15)/15 # BEstimate = 5
