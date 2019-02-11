@@ -18,7 +18,7 @@ library(scales)
 
 ##Task 1. Cetaceans in Captivity
 
-```{r data}
+```{r get_data}
 cetaceans<- read_csv("captive_cetacean.csv")
 ```
 
@@ -52,9 +52,30 @@ cod_viz
 
 
 ##Task 2. Parameter Estimation - Wild Fish Catch
-```{r}
-catch<-read_csv("fish_catch.csv")
+```{r get_data2}
+#Read-in catch data
+catch<- read_csv("fish_catch.csv")
 
-plot(catch)
 ```
 
+```{r exploratory graph}
+
+#Making an exploratory graph to estimate the structure of the data
+ggplot(catch, aes(x=Year, y=Wild_Catch))+
+  geom_point()
+#Data look non-linear, and somewhat logistic
+Bestimate<- (90 - 15)/15
+
+#Slope of natural log (y=e^rt -> ln(y) = rt) = r
+#Looking at the graph, time 0-4 was the exponential growth
+
+```
+
+Recall logistic growth equation: 
+
+N(t) = A/(1+Be^-rt)
+# Estimate for K/A: ~ 90
+# Estimate for N0: ~ 15
+# Estimate for B: ~ 5
+
+BEstimate <- (3700 - 2000)/2000 # BEstimate = 0.85
