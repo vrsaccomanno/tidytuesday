@@ -22,7 +22,7 @@ library(scales)
 cetaceans<- read_csv("captive_cetacean.csv")
 ```
 
-```{r}
+```{r wrangle}
 
 cod<- cetaceans %>%
   filter(acquisition %in% c("Rescue", "Capture", "Born")) %>% 
@@ -75,12 +75,16 @@ Bestimate<- (90 - 15)/15
 #Slope of natural log (y=e^rt -> ln(y) = rt) = r. Looking at the graph, 1950-1970 (i.e. 1-20) was the exponential catch.
 
 #Estimate r (the catch rate). Isolate the first 20 points
-exp_r <- catch_seq %>%
+r_est <- catch_seq %>%
   filter(seq<21) 
 
 #Make sure the log is linear
-ggplot(exp_r, aes(x=seq, y=log(Wild_Catch)))+
+ggplot(r_est, aes(x=seq, y=log(Wild_Catch)))+
   geom_point()
+
+#Estimate r
+lm(log(Wild_Catch) ~seq, data=r_est)
+#r initial = 0.05749
 
 ```
 
@@ -90,4 +94,5 @@ N(t) = A/(1+Be^-rt)
 # Estimate for K/A: ~ 90
 # Estimate for N0: ~ 15
 # Estimate for B: ~ 5
+# Estimate for r: ~0.05749
 BEstimate <- (90 - 15)/15 # BEstimate = 5
