@@ -1,0 +1,236 @@
+---
+title: "ESM 244 Lab Week 4 Key"
+author: "Allison Horst"
+date: "January 28, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Lab Week 4:
+
+- Nonlinear least squares
+- Panel regression level 0 example
+- Shiny example with navbarPage
+
+```{r}
+library(tidyverse)
+library(Ecdat)
+library(plm)
+library(lmtest)
+library(car) #for plotting
+```
+
+###Part 1. Nonlinear least squares (logistic growth fitting)
+
+a. Load dataset CellGrowth.csv. Create a scatterplot.
+
+```{r get_data}
+
+CellGrowth <- read_csv("CellGrowth.csv")
+
+```
+
+b. Look at it
+
+```{r cell_graph} 
+
+ggplot(CellGrowth, aes(x = Time, y = CellCount)) + geom_point()
+
+```
+
+Recall logistic growth equation: 
+
+N(t) = A/(1+Be^-rt)
+
+# Estimate for K/A: ~ 3700
+# Estimate for N0: ~ 2000
+# Estimate for B: ~ 0.85
+
+BEstimate <- (3700 - 2000)/2000 # BEstimate = 0.85
+
+c. Create a subset of the data that you think is just in the 'exponential growth phase.' Take the natural log of the count and create a basic scatterplot of time v ln(counts). 
+
+```{r}
+
+Graph2 <- plot(CellGrowth$Time[0:5],log(CellGrowth$CellCount[0:5])) # Create a basic scatterplot of time versus ln(CellCounts)
+
+```
+
+Then find the slope of that line to get 'r' (growth rate constant)
+
+```{r}
+
+r_est <- lm(log(CellGrowth$CellCount[1:5]) ~ CellGrowth$Time[1:5]) # R ~ 0.1035
+
+```
+
+
+d. Nonlinear least squares 
+
+e. Model fitting 
+
+```{r}
+
+cell_fit <- nls(CellCount ~ A/(1+B*exp(-r*Time)), 
+                start = list(A = 3700, B = 0.85, r = 0.1035), 
+                data = CellGrowth, trace = TRUE) 
+
+```
+
+
+Uses the estimates as a start to find the best estimated values (by convergence) for A, B and r
+
+8 iterations for convergence
+Estimates, St. Errors and p-values
+
+Parameters:
+Estimate Std. Error t value Pr(>|t|)    
+A 3.806e+03  5.029e+01   75.67  < 2e-16 ***
+B 9.233e-01  5.887e-02   15.68 2.33e-09 ***
+r 3.443e-01  3.219e-02   10.70 1.73e-07 ***
+
+f. Create new variables for A, B and r
+
+```{r}
+
+A <- coef(cell_fit)[1]
+B <- coef(cell_fit)[2]
+r <- coef(cell_fit)[3]
+
+```
+
+g. Create a new sequence containing a series of times over which you'll predict the cell count
+
+```{r}
+
+time_seq <- seq(0,20, length = 100)
+
+```
+
+h. Using the parameters (A, B, and r) and the time sequence, predict the cell counts for the logistic growth model
+
+```{r}
+
+cell_pred <- A/(1+B*exp(-r*time_seq)) # Logistic growth model
+
+```
+
+i. Bind together the time sequence data and the predictions data into a new data frame
+
+```{r}
+
+pred_df <- data.frame(time_seq, cell_pred)
+
+```
+
+
+j. Create a single graph in which you show the original data (as scatterplot points) and the predicted data (as a line graph)
+
+```{r}
+
+ggplot(CellGrowth, aes(x = Time, y = CellCount)) + 
+  geom_point(colour = "blue", size = 3) + 
+  theme_bw() +
+  geom_line(data = pred_df, aes(x = time_seq, y = cell_pred), colour = "orange", size = 1) + 
+  xlab("Time (h)") +
+  ylab("Cell Count") +
+  ggtitle("Bacterial Growth")
+
+```
+
+###Part 2. Panel Regression - First Shot
+
+The Data:
+
+This data and example came from the Ecdat package in R: <https://cran.r-project.org/web/packages/Ecdat/Ecdat.pdf>
+
+All you have to do is install and load the "Ecdat" package. The Cigarette dataset contains information on the number of cigarette packs per person across all 50 United States from 1985-1995.  We will look at the following columns:
+
+- state (our "entity")
+- year (time)
+- packpc (the number of packs per capita- our DV)
+- avgprs (average price during fiscal year, including sales taxes- our IV)
+
+```{r data_setup, message=FALSE}
+
+cigs_panel <- Cigarette %>% 
+  select(state, year, packpc, avgprs) #only retaining the 4 columns we're interested in
+  
+```
+
+### Look at it
+
+```{r}
+
+ggplot(Cigarette, aes(x = avgprs, y = packpc, group = state)) +
+  geom_point(aes(color = state)) +
+  geom_smooth(method = "lm", 
+              aes(color = state), 
+              size = 0.3, 
+              se = FALSE)
+
+ggplot(Cigarette, aes(x = year, y = packpc, group = state)) +
+  geom_point(aes(color = state)) +
+  geom_smooth(method = "lm",
+              aes(color = state),
+              size = 0.3,
+              se = FALSE)
+
+ggplot(Cigarette, aes(x = year, y = avgprs, group = state)) +
+  geom_point(aes(color = state)) +
+  geom_smooth(method = "lm",
+              aes(color = state),
+              size = 0.3,
+              se = FALSE)
+
+```
+
+### Entity Fixed Effects Model
+
+Our research question is: How did the average price of cigarettes relate to the number of packs per person from 1985-1995 ON AVERAGE across all 50 states?
+
+```{r cigs_model}
+
+cigs_model <- plm(packpc ~ avgprs,
+                data = cigs_panel,
+                index = c("state","year"),
+                model = "within")
+
+cigs_model #So the number of packs per person decreased by an average of 0.364 when average price increased by 1 dollar across all 50 states
+
+coeftest(cigs_model, vcov. = vcovHC(cigs_model, type = "HC1")) # coefficient is extremely significant (using robust SE)
+
+
+```
+
+But we know the number of packs per person has been going down across the United States for health reasons too, not just financial.  So we are going to use a time and entity fixed effects model.
+
+### Time and Entity Fixed Effects Model
+
+```{r et_cigs_model}
+
+et_cigs_model <- plm(packpc ~ avgprs,
+                data = cigs_panel,
+                index = c("state","year"),
+                model = "within",
+                effect = "twoways")
+
+et_cigs_model
+
+coeftest(et_cigs_model, vcov. = vcovHC(et_cigs_model, type = "HC1")) #coefficient is still highly significant, but is a different value
+```
+
+### Which model is better?
+
+Should we use time fixed effects, or just entity fixed effects?
+
+```{r time_fe_test}
+
+pFtest(et_cigs_model, cigs_model)
+
+```
+
+**Conclusion:** Yes, we should include time fixed effects.  This makes sense, because we know that cigarette use is decreasing universally over time due to so many factors - health, societal pressure, etc.  We would expect time to substantially influence the number of packs per person.

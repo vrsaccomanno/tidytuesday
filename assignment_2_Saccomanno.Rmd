@@ -16,7 +16,7 @@ library(scales)
 
 ```
 
-
+##Task 1. Cetaceans in Captivity
 
 ```{r data}
 cetaceans<- read_csv("captive_cetacean.csv")
@@ -30,8 +30,8 @@ cod<- cetaceans %>%
    'Rescue' = 'Rescued', 'Born' = 'Born in Captivity', 'Capture' = 'Captured')
   ) 
  
- 
-cod$originDate = as.Date(as.character(cod$originDate), format = "%m/%d/%y")
+cod$originDate = as.Date(as.character(cod$originDate), format = "%m/%d/%y", "%y")
+View(cod)
 
 cod_viz<- cod %>% 
   ggplot(aes(x=originDate, fill=as.factor(acquisition)))+
@@ -48,5 +48,13 @@ cod_viz<- cod %>%
  
 cod_viz
 
+```
+
+
+##Task 2. Parameter Estimation - Wild Fish Catch
+```{r}
+catch<-read_csv("fish_catch.csv")
+
+plot(catch)
 ```
 
