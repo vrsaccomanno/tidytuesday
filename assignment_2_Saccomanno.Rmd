@@ -29,27 +29,24 @@ cod<- cetaceans %>%
   mutate(acquisition = recode_factor(acquisition,
    'Rescue' = 'Rescued', 'Born' = 'Born in Captivity', 'Capture' = 'Captured')
   ) 
-  
+ 
+ 
 cod$originDate = as.Date(as.character(cod$originDate), format = "%m/%d/%y")
-
-
-View(cod)
 
 cod_viz<- cod %>% 
   ggplot(aes(x=originDate, fill=as.factor(acquisition)))+
-                   geom_histogram(alpha=0.7, bins = 80) +
-  #scale_fill_manual(values = c("Captured" = "red",
-                            #  "Born in Captivity"="yellow",
-                             # "Rescued" = "blue"))+
+                   geom_histogram(alpha=0.7, bins = 90, color= "black", linetype = "solid") +
+  scale_fill_manual(name= "Acquisition\nType", values = c("Captured" = "red",
+                              "Born in Captivity"="yellow",
+                              "Rescued" = "blue"))+
   scale_x_date(breaks = date_breaks("10 years"), 
-               labels = date_format("%Y"))
-  
+               labels = date_format("%Y")) + 
+  scale_y_discrete(limits=seq(0,170,20))+
+  labs(x= '',
+       y= 'Number of Cetaceans')+
+  theme_classic()
+ 
 cod_viz
 
-
-
-
-
-?strptime
 ```
 
