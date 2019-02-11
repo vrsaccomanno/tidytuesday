@@ -96,3 +96,42 @@ N(t) = A/(1+Be^-rt)
 # Estimate for B: ~ 5
 # Estimate for r: ~0.05749
 BEstimate <- (90 - 15)/15 # BEstimate = 5
+
+```{r nls}
+#Model fitting
+catch_fit <- nls(Wild_Catch ~ A/(1+B*exp(-r*seq)), 
+                start = list(A = 90, B = 5, r = 0.05749), 
+                data = catch_seq, trace = TRUE) 
+
+#Converging at 1365.143; A =100.27828, B= 4.31634, r=0.06989 
+```
+
+```{r predicting}
+
+A <- coef(catch_fit)[1]
+B <- coef(catch_fit)[2]
+r <- coef(catch_fit)[3]
+
+#Create a new sequence of time values (time_seq)
+time_seq <- seq(0,62, length = 100)
+
+#Using the parameters (A, B, and r) and the time sequence, predict the catch for the logistic growth model
+catch_pred <- A/(1+B*exp(-r*time_seq)) # Logistic growth model
+
+#Binding together the time sequence data and the predictions data into a new data frame
+pred_df <- data.frame(time_seq, catch_pred)
+
+```
+
+```{r graphing_pred}
+
+ggplot(catch_seq, aes(x = seq, y = Wild_Catch)) + 
+  geom_point(colour = "blue", size = 3) + 
+  theme_bw() +
+  geom_line(data = pred_df, aes(x = time_seq, y = catch_pred), colour = "orange", size = 1) + 
+  xlab("Year") +
+  ylab("Catch") +
+  ggtitle("Wild Catch 1950-2012")
+
+```
+
