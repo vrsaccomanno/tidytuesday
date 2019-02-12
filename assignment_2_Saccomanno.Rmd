@@ -9,8 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r packages}
+```{r packages, warning=FALSE, message=FALSE}
 
+#Attach packages
 library(tidyverse)
 library(scales)
 library(stargazer)
@@ -20,28 +21,21 @@ library(lubridate)
 
 ##Task 1. Cetaceans in Captivity
 
-```{r get_data}
+```{r get_data, warning=FALSE, message=FALSE, warn.conflicts= FALSE}
+#Load data
 cetaceans<- read_csv("captive_cetacean.csv")
 ```
 
-```{r wrangle}
+```{r wrangle, message = FALSE, warning=FALSE}
 
+#Wrangle data
 cod<- cetaceans %>%
   filter(acquisition %in% c("Rescue", "Capture", "Born")) %>% 
   mutate(acquisition = recode_factor(acquisition,
    'Rescue' = 'Rescued', 'Born' = 'Born in Captivity', 'Capture' = 'Captured')
   ) 
 
-cod$originDate = as.Date(as.character(cod$originDate), format = "%m/%d/%y")
-
-time<-function(cod, year=1968){
-  m<-year(cod) %% 100
-  year(cod)<-ifelse(m > year %% 100,1900+m, 2000+m)
-  cod
-}
-
-time(cod, 1952)
-
+#Plot acquisition over time
 cod_viz<- cod %>% 
   ggplot(aes(x=originDate, fill=as.factor(acquisition)))+
                    geom_histogram(alpha=0.7, bins = 90, color= "black", linetype = "solid") +
@@ -51,8 +45,10 @@ cod_viz<- cod %>%
   scale_x_date(breaks = date_breaks("10 years"), 
                labels = date_format("%Y")) + 
   scale_y_discrete(limits=seq(0,170,20))+
-  labs(x= '',
-       y= 'Number of Cetaceans')+
+  labs(x= 'Year',
+       y= 'Number of Cetaceans',
+       title = "Cetacean acquisition type by year (1938-2017)",
+       caption = "Data source: Amber Thomas")+
   theme_classic()
  
 cod_viz
@@ -60,7 +56,7 @@ cod_viz
 
 
 ##Task 2. Parameter Estimation - Wild Fish Catch
-```{r get_data2}
+```{r get_data2, warn.conflicts= FALSE, warning=FALSE, message=FALSE}
 #Read-in catch data
 catch<- read_csv("fish_catch.csv")
 
@@ -84,14 +80,14 @@ Bestimate<- (90 - 15)/15
 - The wild catch data from 1950-2012 look non-linear and fairly logistic.
 - Logistic growth equation: $$N_t = \frac{A}{1+Be^{-rt}}$$
 - Initial estimates: 
-    -Estimate for K/A: ~ 90 million tons
-    -Estimate for N0: ~ 15 million tons
-    -Estimate for B: ~ 5
-          -BEstimate:(90 - 15)/15 # BEstimate = 5 million tons
-    -Estimate for r: ~0.05749
+-   Estimate for K/A: ~ 90 million tons
+- Estimate for N0: ~ 15 million tons
+- Estimate for B: ~ 5
+- BEstimate:(90 - 15)/15 = 5 million tons
+- Estimate for r: ~0.05749
 
 
-```{r equation_estimates}
+```{r equation_estimates, warning=FALSE, message=FALSE}
 #Looking at the graph, 1950-1970 (i.e. 1-20) was the exponential catch phase. Slope of natural log (y=e^rt -> ln(y) = rt) = r. 
 
 #Estimate r (the catch rate). Isolate the first 20 points
@@ -108,7 +104,7 @@ lm(log(Wild_Catch) ~seq, data=r_est)
 ```
 
 
-```{r nls}
+```{r nls, warning=FALSE, message=FALSE}
 #Model fitting
 catch_fit <- nls(Wild_Catch ~ A/(1+B*exp(-r*seq)), 
                 start = list(A = 90, B = 5, r = 0.05749), 
@@ -126,7 +122,7 @@ stargazer(catch_fit, title = "Results", align=TRUE)
 - B=4.32 million tons 
 - r=0.06989 
 
-```{r predicting}
+```{r predicting, warning=FALSE, message=FALSE}
 
 A <- coef(catch_fit)[1]
 B <- coef(catch_fit)[2]
@@ -143,15 +139,16 @@ pred_df <- data.frame(time_seq, catch_pred)
 
 ```
 
-```{r graphing_pred}
+```{r graphing_pred, warning=FALSE, message=FALSE}
 
 ggplot(catch_seq, aes(x = seq, y = Wild_Catch)) + 
   geom_point(colour = "purple", size = 3) + 
   theme_bw() +
   geom_line(data = pred_df, aes(x = time_seq, y = catch_pred), colour = "orange", size = 1) + 
-  xlab("Year") +
-  ylab("Catch (million tons)") +
-  ggtitle("Wild Catch 1950-2012 and predicted catch through 2050")+
+  labs(x="Year",
+       y= "Catch (million tons)",
+       title = "Global wild catch from 1950-2012 and predicted catch through 2050",
+       subtitle = "1950 = 0; 2012 = 62; 2050=100") +
   theme_classic()
 
 ```
