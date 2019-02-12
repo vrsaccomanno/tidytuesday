@@ -14,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(scales)
 library(stargazer)
+library(lubridate)
 
 ```
 
@@ -30,9 +31,16 @@ cod<- cetaceans %>%
   mutate(acquisition = recode_factor(acquisition,
    'Rescue' = 'Rescued', 'Born' = 'Born in Captivity', 'Capture' = 'Captured')
   ) 
- 
-cod$originDate = as.Date(as.character(cod$originDate), format = "%m/%d/%y", "%y")
-View(cod)
+
+cod$originDate = as.Date(as.character(cod$originDate), format = "%m/%d/%y")
+
+time<-function(cod, year=1968){
+  m<-year(cod) %% 100
+  year(cod)<-ifelse(m > year %% 100,1900+m, 2000+m)
+  cod
+}
+
+time(cod, 1952)
 
 cod_viz<- cod %>% 
   ggplot(aes(x=originDate, fill=as.factor(acquisition)))+
@@ -48,7 +56,6 @@ cod_viz<- cod %>%
   theme_classic()
  
 cod_viz
-
 ```
 
 
@@ -146,6 +153,12 @@ ggplot(catch_seq, aes(x = seq, y = Wild_Catch)) +
   ylab("Catch (million tons)") +
   ggtitle("Wild Catch 1950-2012 and predicted catch through 2050")+
   theme_classic()
+
+```
+
+
+##Task 3. Bootstrapped confidence interval for proportions
+```{r}
 
 ```
 
