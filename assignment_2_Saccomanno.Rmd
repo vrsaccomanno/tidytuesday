@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(scales)
+library(stargazer)
 
 ```
 
@@ -61,18 +62,30 @@ catch_seq<- catch %>%
   mutate("seq"= seq(from=0, to=62)) 
 ```
 
-```{r exploratory graph}
+```{r exploratory_graph}
 
 #Making an exploratory graph to estimate the structure of the data
 ggplot(catch_seq, aes(x=seq, y=Wild_Catch))+
   geom_point()+
   theme(axis.text.x=element_text(angle=90, hjust=1))
 
-
-#Data look non-linear, and somewhat logistic
+#Estimate B
 Bestimate<- (90 - 15)/15
 
-#Slope of natural log (y=e^rt -> ln(y) = rt) = r. Looking at the graph, 1950-1970 (i.e. 1-20) was the exponential catch.
+```
+####Exploratory graph interpretation
+- The wild catch data from 1950-2012 look non-linear and fairly logistic.
+- Logistic growth equation: $$N_t = \frac{A}{1+Be^{-rt}}$$
+- Initial estimates: 
+    -Estimate for K/A: ~ 90 million tons
+    -Estimate for N0: ~ 15 million tons
+    -Estimate for B: ~ 5
+          -BEstimate:(90 - 15)/15 # BEstimate = 5 million tons
+    -Estimate for r: ~0.05749
+
+
+```{r equation_estimates}
+#Looking at the graph, 1950-1970 (i.e. 1-20) was the exponential catch phase. Slope of natural log (y=e^rt -> ln(y) = rt) = r. 
 
 #Estimate r (the catch rate). Isolate the first 20 points
 r_est <- catch_seq %>%
@@ -85,17 +98,8 @@ ggplot(r_est, aes(x=seq, y=log(Wild_Catch)))+
 #Estimate r
 lm(log(Wild_Catch) ~seq, data=r_est)
 #r initial = 0.05749
-
 ```
 
-Recall logistic growth equation: 
-
-N(t) = A/(1+Be^-rt)
-# Estimate for K/A: ~ 90
-# Estimate for N0: ~ 15
-# Estimate for B: ~ 5
-# Estimate for r: ~0.05749
-BEstimate <- (90 - 15)/15 # BEstimate = 5
 
 ```{r nls}
 #Model fitting
@@ -103,8 +107,17 @@ catch_fit <- nls(Wild_Catch ~ A/(1+B*exp(-r*seq)),
                 start = list(A = 90, B = 5, r = 0.05749), 
                 data = catch_seq, trace = TRUE) 
 
-#Converging at 1365.143; A =100.27828, B= 4.31634, r=0.06989 
+#Least squares are converging at 1365.1; A =100.28 million tons, B= 4.32 million tons, r=0.06989 
+
+#Table summary of results
+stargazer(catch_fit, title = "Results", align=TRUE)
 ```
+
+####Nonlinear least squares parameter outcome
+- Least squares are converging at 1365.1
+- A=100.28 million tons 
+- B=4.32 million tons 
+- r=0.06989 
 
 ```{r predicting}
 
@@ -113,10 +126,10 @@ B <- coef(catch_fit)[2]
 r <- coef(catch_fit)[3]
 
 #Create a new sequence of time values (time_seq)
-time_seq <- seq(0,62, length = 100)
+time_seq <- seq(0,100, length = 100)
 
 #Using the parameters (A, B, and r) and the time sequence, predict the catch for the logistic growth model
-catch_pred <- A/(1+B*exp(-r*time_seq)) # Logistic growth model
+catch_pred <- A/(1+B*exp(-r*time_seq))
 
 #Binding together the time sequence data and the predictions data into a new data frame
 pred_df <- data.frame(time_seq, catch_pred)
@@ -126,12 +139,13 @@ pred_df <- data.frame(time_seq, catch_pred)
 ```{r graphing_pred}
 
 ggplot(catch_seq, aes(x = seq, y = Wild_Catch)) + 
-  geom_point(colour = "blue", size = 3) + 
+  geom_point(colour = "purple", size = 3) + 
   theme_bw() +
   geom_line(data = pred_df, aes(x = time_seq, y = catch_pred), colour = "orange", size = 1) + 
   xlab("Year") +
-  ylab("Catch") +
-  ggtitle("Wild Catch 1950-2012")
+  ylab("Catch (million tons)") +
+  ggtitle("Wild Catch 1950-2012 and predicted catch through 2050")+
+  theme_classic()
 
 ```
 
