@@ -157,30 +157,39 @@ ggplot(catch_seq, aes(x = seq, y = Wild_Catch)) +
 
 
 ##Task 3. Bootstrapped confidence interval for proportions
-```{r load_data_3}
+```{r load_data_3, warning=FALSE, message=FALSE}
 #Read in data
 survey <- read_csv("boot.csv")
+survey_2<- as.vector(survey$member)
 ```
 
-```{r explore_data}
+```{r explore_data_3, warning=FALSE, message=FALSE}
 
 ggplot(survey, aes(member))+
   geom_bar()
 ```
 
 
-```{r function}
+```{r function, warning=FALSE, message=FALSE}
 
 # Create a function to calculate the proportion of varying vectors (x) of index (i). i = bootstap sample number allowing things to be sequential. x= full sample of 36 people
-proportion_fun <- function (x,i) {proportion(x[i])}
+proportion_fun <- function(x,i){sum(x[i])/length(x[i])}
+proportion_fun(survey_2)
 
-# First try - 10 bootstrap samples 
-# 10 bootstrap samples: 
-boot_10 <- boot(flippers, mean_fun, R = 10)
+# 100,000 bootstrap samples: 
+boot_100000 <- boot(survey_2, proportion_fun, R=100000)
+boot_100000$t # to report proportion of all 10 bootstrap samples
+boot_100000$t0 # to report the proportion of the original sample
+boot_100000
 
-# Reporting outcomes of bootstrapping: 
-boot_10$t # to report means of all 10 bootstrap samples
-boot_10$t0 # to report the mean of the original sample
-boot_10
+
+ggplot() +
+  aes(boot_100000$t) + 
+  geom_histogram()
+
+boot.ci(boot_100000, conf.=.95)
+
 ```
+
+The bootstrapped 95% confidence interval suggests that, with everything else held constant, there is a 95% probability that the true proportion of non-binary/genderqueer student who experience exclusionary, hostile or intimidating conduct is within 45.2% and 76.9% of students who identify as non-binary/genderqueer.
 
