@@ -14,11 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 #Attach packages
 library(tidyverse)
 library(scales)
-library(stargazer)
 library(lubridate)
 library(boot)
-library(naniar)
-
 ```
 
 ##Task 1. Cetaceans in Captivity
@@ -84,8 +81,7 @@ Bestimate<- (90 - 15)/15
 - Initial estimates: 
 -   Estimate for K/A: ~ 90 million tons
 - Estimate for N0: ~ 15 million tons
-- Estimate for B: ~ 5
-- BEstimate:(90 - 15)/15 = 5 million tons
+- BEstimate:(90 - 15)/15 = 5 
 - Estimate for r: ~0.05749
 
 
@@ -111,11 +107,6 @@ lm(log(Wild_Catch) ~seq, data=r_est)
 catch_fit <- nls(Wild_Catch ~ A/(1+B*exp(-r*seq)), 
                 start = list(A = 90, B = 5, r = 0.05749), 
                 data = catch_seq, trace = TRUE) 
-
-#Least squares are converging at 1365.1; A =100.28 million tons, B= 4.32 million tons, r=0.06989 
-
-#Table summary of results
-stargazer(catch_fit, title = "Results", align=TRUE)
 ```
 
 ####Nonlinear least squares parameter outcome
@@ -170,7 +161,7 @@ ggplot(survey, aes(member))+
 ```
 
 
-```{r function, warning=FALSE, message=FALSE}
+```{r function2, warning=FALSE, message=FALSE}
 
 # Create a function to calculate the proportion of varying vectors (x) of index (i). i = bootstap sample number allowing things to be sequential. x= full sample of 36 people
 proportion_fun <- function(x,i){sum(x[i])/length(x[i])}
@@ -178,18 +169,33 @@ proportion_fun(survey_2)
 
 # 100,000 bootstrap samples: 
 boot_100000 <- boot(survey_2, proportion_fun, R=100000)
-boot_100000$t # to report proportion of all 10 bootstrap samples
-boot_100000$t0 # to report the proportion of the original sample
-boot_100000
-
+#boot_100000$t # to report proportion of all 10 bootstrap samples
+#boot_100000$t0 # to report the proportion of the original sample
+#boot_100000
 
 ggplot() +
   aes(boot_100000$t) + 
   geom_histogram()
 
-boot.ci(boot_100000, conf.=.95)
+#boot.ci(boot_100000, conf.=.95)
 
 ```
 
 The bootstrapped 95% confidence interval suggests that, with everything else held constant, there is a 95% probability that the true proportion of non-binary/genderqueer student who experience exclusionary, hostile or intimidating conduct is within 45.2% and 76.9% of students who identify as non-binary/genderqueer.
 
+##Task 4. RStudio Conference Talks
+
+####Talk 1: Shiny in production: principles, practices, and tools - Joe Cheng
+b) Interesting things that you learned: 
+- Shinyloadtest is a tool to test app latency, or how long it takes sessions to succeed when multiple users are using the app.When app is slow, use a profiler (profis) to figure out where time is being spent and always try to avoid loading raw data into Shiny and save data frames as “feather” files for faster reading. 
+- Plot caching is a new option that can seep the app up if you have slow plots.
+c) One question that you would have liked to asked the speaker
+- Is it worth it to design more simplistic plots to avoid latency?
+
+
+####Talk 2:Spatial data science in the Tidyverse - Edzer Pebesma
+b) Interesting things that you learned
+- Simple features (sf) package can be used to extend tables to spatial tables 
+- Data cubes are array data where values are given for each combination of the dimension values. The “stars” package can help by reading, manipulating, writing and plotting spatiotemporal arrays (including raster data) in R
+c) One question that you would have liked to asked the speaker
+- Can you provide more examples about the different applications of sf and stars?
